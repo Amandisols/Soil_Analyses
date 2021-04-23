@@ -45,5 +45,12 @@ DATA$Mg_mgL <- DATA$Mg_mgL - BLANKS$Mg_mgL
 DATA$P_mgL <- DATA$P_mgL - BLANKS$P_mgL
 DATA$S_mgL <- DATA$S_mgL - BLANKS$S_mgL
 
+```
+
+convert to cmol/kg
+```{r}
+
+
 
 ```
+
