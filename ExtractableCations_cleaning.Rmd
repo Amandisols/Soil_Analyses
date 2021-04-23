@@ -1,0 +1,49 @@
+---
+title: "Extractable cations: Cleaning raw data"
+author: "Amanda Pennino"
+date: "4/22/2021"
+output: html_document
+---
+```{r}
+library(readxl)
+library(tidyverse)
+
+```
+
+
+```{r}
+DATA <- read_excel("data/raw/CationExtractions_raw.xlsx", sheet = "data")
+
+```
+
+```{r}
+#replace below detection limits with NAs
+DATA[DATA == "< 0.080"] <- NA
+
+#isolate blanks and find the mean
+#BLANKS <-subset(DATA, Sample == "Blank")
+BLANKS <- DATA %>%
+  subset(Sample == "Blank") %>%
+  mutate(Mn_mgL = mean(Mn_mgL),
+         Fe_mgL = mean(Fe_mgL),
+         Ca_mgL = mean(Ca_mgL),
+         K_mgL = mean(K_mgL),
+         Na_mgL = mean(Na_mgL),
+         Mg_mgL = mean(Mg_mgL),
+         P_mgL = mean(P_mgL),
+         S_mgL = mean(S_mgL))
+
+#subtract blanks from measurements
+DATA <- subset(DATA, Sample != "Blank")
+
+DATA$Mn_mgL <- DATA$Mn_mgL - BLANKS$Mn_mgL
+DATA$Fe_mgL <- DATA$Fe_mgL - BLANKS$Fe_mgL
+DATA$Ca_mgL <- DATA$Ca_mgL - BLANKS$Ca_mgL
+DATA$K_mgL <- DATA$K_mgL - BLANKS$K_mgL
+DATA$Na_mgL <- DATA$Na_mgL - BLANKS$Na_mgL
+DATA$Mg_mgL <- DATA$Mg_mgL - BLANKS$Mg_mgL
+DATA$P_mgL <- DATA$P_mgL - BLANKS$P_mgL
+DATA$S_mgL <- DATA$S_mgL - BLANKS$S_mgL
+
+
+```
