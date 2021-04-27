@@ -20,7 +20,8 @@ DATA$ID <- paste(DATA$pedon, DATA$horizon)
 
 ```
 
-pH
+
+pH in CaCl2
 ```{r}
 pH <- read_excel("data/processed/pH_0.01M_CaCl2.xlsx")
 
@@ -31,6 +32,8 @@ DATA <- DATA %>% select(-c(pH_id, pedon.y, horizon.y, Dilution_pH, Notes, Date))
 
 ```
 
+
+Carbon, Nitrogen
 ```{r}
 CN <- read_excel("data/processed/CN.xlsx")
 
@@ -45,6 +48,14 @@ DATA <- full_join(DATA, CN, by = "ID")
 
 ```
 
+
+```{r}
+out_dir <- "data/processed"
+
+write_csv(DATA, paste(out_dir, "LATWAG_Soil_Database.csv", sep = "/"))
+
+
+```
 
 
 
