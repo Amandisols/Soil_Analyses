@@ -13,15 +13,38 @@ library(readxl)
 
 Current database
 ```{r}
-DATA <- read_excel("data/all_pedons_lateralweathering_1020.xlsx", sheet = "horizon data")
+DATA <- read_excel("data/raw/hb_pedons_analysis_0426.xlsx", sheet = "horizon data")
 
-
+#Create unique id
+DATA$ID <- paste(DATA$pedon, DATA$horizon)
 
 ```
 
 pH
 ```{r}
-pH <- read_excel("data/processed/pH (0.01M CaCl2).xlsx")
+pH <- read_excel("data/processed/pH_0.01M_CaCl2.xlsx")
+
+pH$ID <- paste(pH$pedon, pH$horizon)
+
+DATA <- full_join(DATA, pH, by = "ID")
+DATA <- DATA %>% select(-c(pH_id, pedon.y, horizon.y, Dilution_pH, Notes, Date))
 
 ```
+
+```{r}
+CN <- read_excel("data/processed/CN.xlsx")
+
+CN <- subset(CN, type == "sample")
+
+CN$ID <- paste(CN$pedon, CN$horizon)
+
+CN <- CN %>% select(C_pct, N_pct, CNRatio, ID)
+
+DATA <- full_join(DATA, CN, by = "ID")
+
+
+```
+
+
+
 

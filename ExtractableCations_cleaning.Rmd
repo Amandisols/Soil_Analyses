@@ -18,39 +18,77 @@ DATA <- read_excel("data/raw/CationExtractions_raw.xlsx", sheet = "data")
 
 ```{r}
 #replace below detection limits with NAs
-DATA[DATA == "< 0.080"] <- NA
+DATA[DATA == "-99.99"] <- NA
 
-#isolate blanks and find the mean
-#BLANKS <-subset(DATA, Sample == "Blank")
-BLANKS <- DATA %>%
-  subset(Sample == "Blank") %>%
-  mutate(Mn_mgL = mean(Mn_mgL),
-         Fe_mgL = mean(Fe_mgL),
-         Ca_mgL = mean(Ca_mgL),
-         K_mgL = mean(K_mgL),
-         Na_mgL = mean(Na_mgL),
-         Mg_mgL = mean(Mg_mgL),
-         P_mgL = mean(P_mgL),
-         S_mgL = mean(S_mgL))
+#isolate blanks, remove outliers, find the mean
+BLANKS <-subset(DATA, Lab_id == "Blank")
 
+BLANKS <- BLANKS[-2,]
+
+BLANKS <- BLANKS %>%
+  summarise_at(.vars = vars(Mn_mgL:S_mgL), .funs = mean, na.rm =T) 
+                   
 #subtract blanks from measurements
-DATA <- subset(DATA, Sample != "Blank")
+DATA <- subset(DATA, Lab_id != "Blank")
 
-DATA$Mn_mgL <- DATA$Mn_mgL - BLANKS$Mn_mgL
-DATA$Fe_mgL <- DATA$Fe_mgL - BLANKS$Fe_mgL
 DATA$Ca_mgL <- DATA$Ca_mgL - BLANKS$Ca_mgL
-DATA$K_mgL <- DATA$K_mgL - BLANKS$K_mgL
-DATA$Na_mgL <- DATA$Na_mgL - BLANKS$Na_mgL
-DATA$Mg_mgL <- DATA$Mg_mgL - BLANKS$Mg_mgL
 DATA$P_mgL <- DATA$P_mgL - BLANKS$P_mgL
 DATA$S_mgL <- DATA$S_mgL - BLANKS$S_mgL
 
 ```
 
-convert to cmol/kg
+ppm to cmol/kg (same as meq/100g)
+```{r}
+#mgkg = M+ mg/l * (ml extract/g dry soil) * (1 L/1000 ml) * (1000 g soil/ 1 kg soil) * (1 gram M+/ 1000 mg M+) * atomic weight (1/(g/mol)) * (1000 mmol/mol) *
+
+cmol_fun <- function(mgL, AW, VALENCE) {
+  
+  DATA <- DATA %>% 
+    mutate(cmolKg = mgL * (50/5) * (1/1000) * 1000 * (1/1000) * (1/AW) * 1000 * VALENCE * (1/10))
+    
+  return(DATA$cmolKg)
+  
+}
+
+
+
+cmolKg <- cmol_fun(DATA$Ca_mgL, 40.07, 2)
+DATA$Ca_cmolKg = cmolKg
+
+cmolKg <- cmol_fun(DATA$Na_mgL, 22.99, 1)
+DATA$Na_cmolKg = cmolKg
+
+cmolKg <- cmol_fun(DATA$K_mgL, 39.10, 1)
+DATA$K_cmolKg = cmolKg
+
+cmolKg <- cmol_fun(DATA$Mg_mgL, 24.31, 2)
+DATA$Mg_cmolKg = cmolKg
+
+cmolKg <- cmol_fun(DATA$Mg_mgL, 26.98, 3)
+DATA$Mg_cmolKg = cmolKg
+
+```
+
+
 ```{r}
 
 
+mgKg_fun<- function(mgL) {
+  
+  DATA <- DATA %>% 
+    mutate(mgKg = mgL * (50/5) * (1/1000) * 1000)
+    
+  return(DATA$mgKg)
+  
+}
+
+
+
+mgKg <- mgKg_fun(DATA$Ca_mgL)
+DATA$Ca_mgKg = mgKg
+
+DATA$Ca_cmolKg <- (DATA$Ca_mgKg/(40.08/2)/10)
 
 ```
+
 
