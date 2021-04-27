@@ -45,15 +45,35 @@ CN <- CN %>% select(C_pct, N_pct, CNRatio, ID)
 
 DATA <- full_join(DATA, CN, by = "ID")
 
+DATA <- DATA %>% mutate_at(vars(C_pct:CNRatio), funs(round(., 5)))
+
 
 ```
+
+```{r}
+
+Cations <- read_csv("data/processed/ExtractableCations.csv")
+
+#Below detection limit
+Cations[,4:20][is.na(Cations[,4:20])] = -9999.999
+
+Cations$ID <- paste(Cations$pedon, Cations$horizon)
+
+Cations <- Cations %>% select(ID, Ca_cmolKg, Na_cmolKg, Mg_cmolKg, K_cmolKg, CEC_cmolKg)
+
+DATA <- full_join(DATA, Cations, by = "ID")
+
+cols <- names(DATA)[29:33]
+DATA <- DATA %>% mutate_at(vars(Ca_cmolKg:CEC_cmolKg), funs(round(., 3)))
+
+```
+
 
 
 ```{r}
 out_dir <- "data/processed"
 
 write_csv(DATA, paste(out_dir, "LATWAG_Soil_Database.csv", sep = "/"))
-
 
 ```
 

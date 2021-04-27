@@ -39,56 +39,41 @@ DATA$S_mgL <- DATA$S_mgL - BLANKS$S_mgL
 
 ppm to cmol/kg (same as meq/100g)
 ```{r}
-#mgkg = M+ mg/l * (ml extract/g dry soil) * (1 L/1000 ml) * (1000 g soil/ 1 kg soil) * (1 gram M+/ 1000 mg M+) * atomic weight (1/(g/mol)) * (1000 mmol/mol) *
-
-cmol_fun <- function(mgL, AW, VALENCE) {
-  
-  DATA <- DATA %>% 
-    mutate(cmolKg = mgL * (50/5) * (1/1000) * 1000 * (1/1000) * (1/AW) * 1000 * VALENCE * (1/10))
-    
-  return(DATA$cmolKg)
-  
-}
-
-
-
-cmolKg <- cmol_fun(DATA$Ca_mgL, 40.07, 2)
-DATA$Ca_cmolKg = cmolKg
-
-cmolKg <- cmol_fun(DATA$Na_mgL, 22.99, 1)
-DATA$Na_cmolKg = cmolKg
-
-cmolKg <- cmol_fun(DATA$K_mgL, 39.10, 1)
-DATA$K_cmolKg = cmolKg
-
-cmolKg <- cmol_fun(DATA$Mg_mgL, 24.31, 2)
-DATA$Mg_cmolKg = cmolKg
-
-cmolKg <- cmol_fun(DATA$Mg_mgL, 26.98, 3)
-DATA$Mg_cmolKg = cmolKg
-
-```
-
-
-```{r}
-
 
 mgKg_fun<- function(mgL) {
-  
-  DATA <- DATA %>% 
-    mutate(mgKg = mgL * (50/5) * (1/1000) * 1000)
-    
+  DATA <- DATA %>% mutate(mgKg = mgL * (50/5) * (1/1000) * 1000)
   return(DATA$mgKg)
-  
 }
 
 
 
 mgKg <- mgKg_fun(DATA$Ca_mgL)
 DATA$Ca_mgKg = mgKg
-
 DATA$Ca_cmolKg <- (DATA$Ca_mgKg/(40.08/2)/10)
 
+mgKg <- mgKg_fun(DATA$Na_mgL)
+DATA$Na_mgKg = mgKg
+DATA$Na_cmolKg <- (DATA$Na_mgKg/(22.99/1)/10)
+
+mgKg <- mgKg_fun(DATA$Mg_mgL)
+DATA$Mg_mgKg = mgKg
+DATA$Mg_cmolKg <- (DATA$Mg_mgKg/(24.3/2)/10)
+
+mgKg <- mgKg_fun(DATA$K_mgL)
+DATA$K_mgKg = mgKg
+DATA$K_cmolKg <- (DATA$K_mgKg/(39.1/1)/10)
+
+
+DATA$CEC_cmolKg <- rowSums(DATA[,c("Ca_cmolKg", "Na_cmolKg", "Mg_cmolKg", "K_cmolKg")], na.rm = TRUE)
 ```
+
+```{r}
+
+out_dir <- "data/processed"
+
+write_csv(DATA, paste(out_dir, "ExtractableCations.csv", sep = "/"))
+```
+
+
 
 
