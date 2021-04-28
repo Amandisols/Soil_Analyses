@@ -13,7 +13,7 @@ library('gridExtra')
 library('aqp')
 
 #pick up csvs from csv folder
-nocsvs <- print(list.files('source/'))
+nocsvs <- print(list.files('../data/raw/elemental'))
 csvlist <- list()
 for(a in seq_along(c(1:length(nocsvs)))){
   csvdata <- read.csv(paste0('source/',nocsvs[a]), header = TRUE, sep = ",")
@@ -43,7 +43,7 @@ colnames(datam) <- c("Si","Al","Fe","Mn","Mg","Ca","Na","K","Ti","P")
 datas <- as.data.frame(cbind(datan,datam,dataf))
 
 #read in horizon data
-list <- read.csv(paste0('horizon/hb_pedons_elemental_0321.csv'), header = TRUE, sep = ",")
+list <- read_xlsx(paste0('data/raw/hb_pedons_analysis_0426.xlsx'))
 
 #subset to elemental
 ele <- subset(list, list$elemental == "Y")
@@ -78,7 +78,7 @@ for(a in seq_along(c(1:nrow(innerjoin)))){
 }
 master <- as.data.frame(cbind(pedon = innerjoin[,1], mids, innerjoin[,4:5], innerjoin[,(ncol(elem)+1):ncol(innerjoin)]), stringsAsFactors = FALSE)
 
-#this csv is the average taken of all samples greater than 1 meter in depth, already adjusted to account for oxides
+#this csv is the average taken of all samples greater than 1 meter in depth, already adjusted to mg kg
 avg <- read.csv('index/hb_soil_avg16.csv', header = TRUE, sep = ",")
 
 #print out available elements

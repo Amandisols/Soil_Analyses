@@ -1,0 +1,116 @@
+---
+title: "tau_soil_hb_mm"
+author: "Jenny Bower"
+date: "4/28/2021"
+output: html_document
+---
+
+```{r}
+library('readxl')
+library('tidyverse')
+library('ggplot2')
+library('reshape')
+library('gridExtra')
+library('aqp')
+```
+
+```{r}
+nocsvs <- print(list.files('data/raw/elemental'))
+csvlist <- list()
+for(a in seq_along(c(1:length(nocsvs)))){
+  csvdata <- read.csv(paste0('data/raw/elemental/',nocsvs[a]), header = TRUE, sep = ",")
+  csvlist[[a]] <- csvdata
+}
+data <- do.call(rbind, csvlist) 
+```
+```{r}
+datan <- as.data.frame(as.character(data[,1]), stringsAsFactors = FALSE)
+colnames(datan) <- c("Name")
+el <- which(names(data) == "Total") + 1
+datae <- data[, el:ncol(data)]
+dataf <- datae[,sapply(datae,is.integer) | sapply(datae,is.numeric)]
+wts <- c(0.467436713, 0.529261188, 0.699430761, 0.774461846, 0.603041882, 0.714695865, 0.74186418, 0.83015022, 0.599348901, 0.436428707)
+datam <- as.data.frame(mapply("*", as.data.frame(data[,3:12]), 10000*wts),stringsAsFactors = FALSE)
+colnames(datam) <- c("Si","Al","Fe","Mn","Mg","Ca","Na","K","Ti","P")
+datas <- as.data.frame(cbind(datan,datam,dataf))
+```
+
+```{r}
+
+
+
+
+```
+
+```{r}
+list <- read_xlsx(paste0('data/raw/hb_pedons_analysis_0426.xlsx'))
+elem <- subset(list, list$elemental == "Y")
+joinlist <- list()
+for(b in seq_along(c(1:nrow(elem)))){
+  if(is.na(elem[b,3])){
+    zippy <- paste0(elem[b,1],'_',elem[b,2])
+  }
+  else {
+    zippy <- paste0(elem[b,1],'_',elem[b,2],'.',elem[b,3])
+  }
+  joinlist[[b]] <- zippy
+}
+zippyjoin <- cbind(elem,do.call(rbind, joinlist))
+colnames(zippyjoin)[23] <- "newname"
+innerjoin <- inner_join(zippyjoin, datas, by = c("newname" = "Name"))
+```
+
+```{r}
+mids <- numeric(length = nrow(innerjoin))
+for(a in seq_along(c(1:nrow(innerjoin)))){
+  mids[a] <- as.numeric((innerjoin[a,4]+innerjoin[a,5])/2)
+}
+master <- as.data.frame(cbind(pedon = innerjoin[,1], mids, innerjoin[,4:5], innerjoin[,(ncol(elem)+1):ncol(innerjoin)]), stringsAsFactors = FALSE)
+
+#this csv is the average taken of all samples greater than 1 meter in depth, already adjusted to mg kg
+avg <- read.csv('index/hb_soil_avg16.csv', header = TRUE, sep = ",")
+
+#print out available elements
+names(innerjoin[,(ncol(elem)+2):ncol(innerjoin)])
+
+#list elements you're interested in for tau
+sel_elem <- c('Fe', 'Al', 'Si', 'Mn', 'Ca', 'P', 'K', 'Ce')
+
+master
+#subset to just the elements wanted
+subs <- master[,sel_elem]
+subsavg <- avg[,sel_elem]
+
+#include ratio of ti/zr
+ratio <- as.data.frame(master$Ti/master$Zr, stringsAsFactors = FALSE)
+ratioavg <- avg$Ti/avg$Zr
+
+#create data frames to work with
+masters <- cbind(Pedon = master$pedon, TDepth = master$`top.cm`, BDepth = master$`base.cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], subs, stringsAsFactors = FALSE)
+avgs <- cbind(Pedon = avg$pedon, TDepth = avg$top.cm, BDepth = avg$base.cm, Depth = avg$base.cm+((avg$top.cm-avg$base.cm)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, subsavg, stringsAsFactors = FALSE)
+
+#loop for exporting and plotting tau values
+peds <- unique(as.vector(master$pedon))
+
+for(a in c(1:length(peds))){
+    
+  pit <- peds[a]
+  print(pit)
+  
+  #subset to each pit
+  mastersub <- subset(masters, as.vector(masters$Pedon) == pit)
+  avgsub <- avgs
+
+  #set first column of elements
+  firstcol <- which(names(mastersub) == "Ratio") + 1 
+  
+  #set Ti values
+  val <- mastersub$Ti
+  index <- avgsub$Ti
+  
+  #function for generating tau
+  taus <- function(elem){
+    blp <- ((mastersub[,elem]*index)/(avgsub[1,elem]*val))-1
+    return(blp)
+  }
+```

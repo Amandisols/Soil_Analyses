@@ -12,7 +12,6 @@ library(tidyverse)
 
 ```{r}
 DATA <- read_excel("data/raw/CationExtractions_raw.xlsx", sheet = "data")
-
 ```
 
 ```{r}
@@ -59,7 +58,7 @@ DATA$K_mgKg = mgKg
 mgKg <- mgKg_fun(DATA$P_mgL)
 DATA$P_mgKg = mgKg
 
-print(DATA)
+write.csv(DATA,"ExtractableIonsForTau.csv")
 
 ```
 
