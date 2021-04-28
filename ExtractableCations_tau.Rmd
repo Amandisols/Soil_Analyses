@@ -1,0 +1,65 @@
+---
+title: "Tau with MM"
+author: "Jenny Bower"
+date: "4/28/2021"
+output: html_document
+---
+```{r}
+library(readxl)
+library(tidyverse)
+
+```
+
+```{r}
+DATA <- read_excel("data/raw/CationExtractions_raw.xlsx", sheet = "data")
+
+```
+
+```{r}
+#replace below detection limits with NAs
+DATA[DATA == "-99.99"] <- NA
+
+#isolate blanks, remove outliers, find the mean
+BLANKS <-subset(DATA, Lab_id == "Blank")
+
+BLANKS <- BLANKS[-2,]
+
+BLANKS <- BLANKS %>%
+  summarise_at(.vars = vars(Mn_mgL:S_mgL), .funs = mean, na.rm =T) 
+                   
+#subtract blanks from measurements
+DATA <- subset(DATA, Lab_id != "Blank")
+
+DATA$Ca_mgL <- DATA$Ca_mgL - BLANKS$Ca_mgL
+DATA$P_mgL <- DATA$P_mgL - BLANKS$P_mgL
+DATA$S_mgL <- DATA$S_mgL - BLANKS$S_mgL
+
+```
+
+ppm to cmol/kg (same as meq/100g)
+```{r}
+
+mgKg_fun<- function(mgL) {
+  DATA <- DATA %>% mutate(mgKg = mgL * (50/5) * (1/1000) * 1000)
+  return(DATA$mgKg)
+}
+
+mgKg <- mgKg_fun(DATA$Ca_mgL)
+DATA$Ca_mgKg = mgKg
+
+mgKg <- mgKg_fun(DATA$Na_mgL)
+DATA$Na_mgKg = mgKg
+
+mgKg <- mgKg_fun(DATA$Mg_mgL)
+DATA$Mg_mgKg = mgKg
+
+mgKg <- mgKg_fun(DATA$K_mgL)
+DATA$K_mgKg = mgKg
+
+mgKg <- mgKg_fun(DATA$P_mgL)
+DATA$P_mgKg = mgKg
+
+print(DATA)
+
+```
+
