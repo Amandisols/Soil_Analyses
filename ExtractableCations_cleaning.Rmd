@@ -45,8 +45,6 @@ mgKg_fun<- function(mgL) {
   return(DATA$mgKg)
 }
 
-
-
 mgKg <- mgKg_fun(DATA$Ca_mgL)
 DATA$Ca_mgKg = mgKg
 DATA$Ca_cmolKg <- (DATA$Ca_mgKg/(40.08/2)/10)
@@ -63,6 +61,8 @@ mgKg <- mgKg_fun(DATA$K_mgL)
 DATA$K_mgKg = mgKg
 DATA$K_cmolKg <- (DATA$K_mgKg/(39.1/1)/10)
 
+mgKg <- mgKg_fun(DATA$P_mgL)
+DATA$P_mgKg = mgKg
 
 DATA$CEC_cmolKg <- rowSums(DATA[,c("Ca_cmolKg", "Na_cmolKg", "Mg_cmolKg", "K_cmolKg")], na.rm = TRUE)
 ```

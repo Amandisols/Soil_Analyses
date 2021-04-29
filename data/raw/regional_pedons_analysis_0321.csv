@@ -1,0 +1,21 @@
+pedon,horizon,subdivision,top cm,base cm,thick,major_color,hue,value,chroma,minor_color,depletion,concentration,texture_modifier,texture_base,structure,consistence,boundry,frags,roots,sample collected,elemental
+BR2.1,Oi,,0,2,2,N2.5/1,N,2.5,1,,,,,,,,,,,Y,
+BR2.1,Oe,,2,4,2,N2.5/1,N,2.5,1,,,,,,,,,,,Y,
+BR2.1,Oa,,4,10,6,N2.5/1,N,2.5,1,,,,,,,,,,,Y,
+BR2.1,A,,10,18,8,N2.5/1,N,2.5,1,,,,,vfsl,2fsbk,fr,aw,5,c,Y,Y
+BR2.1,E,1,18,29,11,7.5YR5/1,7.5YR,5,1,7.5YR5/2,,,gr,vfsl,2msbk,fr,cw,30,f,Y,Y
+BR2.1,E,2,29,39,10,7.5YR5/1,7.5YR,5,1,7.5YR5/2,,,gr,vfsl,2msbk,fr,cw,30,f,Y,Y
+BR2.1,Bhs,,39,48,9,5YR3/2,5YR,3,2,5YR4/1,,,,fsl,2msbk,fr,cs,8,0,Y,Y
+BR2.1,CB,,48,62,14,10YR4/3,10YR,4,3,2.5Y4/2,,,,vfsl,1tkpl,fr,cs,10,0,Y,Y
+BR2.1,C2,,62,67,5,2.5Y4/3,2.5Y,4,3,,,,vgr,sl,1mpl,fr,,40,0,Y,Y
+BR3.1,Oi,,0,1,1,N2.5/1,N,2.5,1,,,,,,,,,,,Y,
+BR3.1,Oe,,1,2,1,N2.5/1,N,2.5,1,,,,,,,,,,,Y,
+BR3.1,Oa,,2,5,3,7.5YR2.5/2,7.5YR,2.5,2,,,,,,2mgr,vfr,aw,0,m,Y,Y
+BR3.1,A,,5,10,5,10YR2/1,10YR,2,1,,,,,vfsl,1fsbk,vfr,aw,0,m,Y,Y
+BR3.1,E,,10,16,6,7.5YR4/2,7.5YR,4,2,7.5YR5/1,,,,fsl,1msbk,fr,as,5,c,Y,Y
+BR3.1,Bhs1,,16,25,9,5YR3/3,5YR,3,3,,,,,fsl,2msbk,fr,cs,10,f,Y,Y
+BR3.1,Bhs2,,25,38,13,7.5YR4/3,7.5YR,4,3,,,,gr,fsl,2msbk,fr,cs,15,f,Y,Y
+BR3.1,Bhs3,,38,45,7,7.5YR3/3,7.5YR,3,3,,,,,vfsl,2msbk,fr,cs,10,f,Y,Y
+BR3.1,Bhs4,,45,57,12,5YR3/3,5YR,3,3,5YR2.5/2,,,gr,vfsl,1fsbk,fr,cs,30,f,Y,Y
+BR3.1,Bhs4,,57,69,12,5YR3/3,5YR,3,3,5YR2.5/2,,,gr,vfsl,1fsbk,fr,cs,30,f,Y,Y
+BR3.1,CB,,69,73,4,10YR4/3,10YR,4,3,,,,gr,ls,m,fr,,30,0,Y,Y
