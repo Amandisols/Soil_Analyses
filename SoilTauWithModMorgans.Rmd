@@ -36,10 +36,9 @@ datas <- as.data.frame(cbind(datan,datam,dataf))
 ```
 
 ```{r}
-
-
-
-
+mm_extracted <- read_csv('data/processed/ExtractableCations.csv', col_names = TRUE)
+mm <- as.data.frame(mm_extracted[,c("pedon","horizon","Ca_mgKg","Na_mgKg","Mg_mgKg","K_mgKg","P_mgKg")],stringsAsFactors = FALSE)
+mm$newname <- paste0(mm$pedon,"_",mm$horizon)
 ```
 
 ```{r}
@@ -55,28 +54,28 @@ for(b in seq_along(c(1:nrow(elem)))){
   }
   joinlist[[b]] <- zippy
 }
-zippyjoin <- cbind(elem,do.call(rbind, joinlist))
-colnames(zippyjoin)[23] <- "newname"
+zippyjoin <- cbind(elem,as.character(do.call(rbind, joinlist)))
+colnames(zippyjoin)[24] <- "newname"
 innerjoin <- inner_join(zippyjoin, datas, by = c("newname" = "Name"))
+innerjoinmm <- inner_join(innerjoin, mm, by = c("newname" = "newname"))
 ```
 
 ```{r}
-mids <- numeric(length = nrow(innerjoin))
-for(a in seq_along(c(1:nrow(innerjoin)))){
-  mids[a] <- as.numeric((innerjoin[a,4]+innerjoin[a,5])/2)
+mids <- numeric(length = nrow(innerjoinmm))
+for(a in seq_along(c(1:nrow(innerjoinmm)))){
+  mids[a] <- as.numeric((innerjoinmm[a,5]+innerjoinmm[a,6])/2)
 }
-master <- as.data.frame(cbind(pedon = innerjoin[,1], mids, innerjoin[,4:5], innerjoin[,(ncol(elem)+1):ncol(innerjoin)]), stringsAsFactors = FALSE)
+master <- as.data.frame(cbind(pedon = innerjoinmm[,1], mids, innerjoinmm[,5:6], innerjoinmm[,(ncol(elem)+1):ncol(innerjoinmm)]), stringsAsFactors = FALSE)
 
 #this csv is the average taken of all samples greater than 1 meter in depth, already adjusted to mg kg
-avg <- read.csv('index/hb_soil_avg16.csv', header = TRUE, sep = ",")
+avg <- read.csv('tau/index/hb_soil_avg16.csv', header = TRUE, sep = ",")
 
 #print out available elements
-names(innerjoin[,(ncol(elem)+2):ncol(innerjoin)])
+names(innerjoinmm[,(ncol(elem)+2):ncol(innerjoinmm)])
 
 #list elements you're interested in for tau
-sel_elem <- c('Fe', 'Al', 'Si', 'Mn', 'Ca', 'P', 'K', 'Ce')
+sel_elem <- c('Ca')
 
-master
 #subset to just the elements wanted
 subs <- master[,sel_elem]
 subsavg <- avg[,sel_elem]
@@ -86,31 +85,47 @@ ratio <- as.data.frame(master$Ti/master$Zr, stringsAsFactors = FALSE)
 ratioavg <- avg$Ti/avg$Zr
 
 #create data frames to work with
-masters <- cbind(Pedon = master$pedon, TDepth = master$`top.cm`, BDepth = master$`base.cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], subs, stringsAsFactors = FALSE)
-avgs <- cbind(Pedon = avg$pedon, TDepth = avg$top.cm, BDepth = avg$base.cm, Depth = avg$base.cm+((avg$top.cm-avg$base.cm)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, subsavg, stringsAsFactors = FALSE)
+masters <- cbind.data.frame(Pedon = as.vector(master$pedon), TDepth = master$`top cm`, BDepth = master$`base cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], Cax = master$Ca_mgKg, subs, stringsAsFactors = FALSE)
+avgs <- cbind(Pedon = avg$pedon, TDepth = avg$top.cm, BDepth = avg$base.cm, Depth = avg$base.cm+((avg$top.cm-avg$base.cm)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, Cax = "", subsavg, stringsAsFactors = FALSE)
 
 #loop for exporting and plotting tau values
 peds <- unique(as.vector(master$pedon))
 
 for(a in c(1:length(peds))){
-    
   pit <- peds[a]
-  print(pit)
-  
+
   #subset to each pit
-  mastersub <- subset(masters, as.vector(masters$Pedon) == pit)
+  mastersub <- subset(masters, masters$Pedon == pit)
   avgsub <- avgs
 
   #set first column of elements
-  firstcol <- which(names(mastersub) == "Ratio") + 1 
+  firstcol <- which(names(mastersub) == "Ratio") + 2
   
   #set Ti values
   val <- mastersub$Ti
   index <- avgsub$Ti
   
   #function for generating tau
-  taus <- function(elem){
-    blp <- ((mastersub[,elem]*index)/(avgsub[1,elem]*val))-1
+  taus <- function(el){
+    blp <- (((mastersub[,el]-mastersub[,10])*index)/(avgsub[1,el]*val))-1
     return(blp)
   }
+  
+  #create tau dataset
+  ltaus <- lapply(seq(from = firstcol, to = ncol(mastersub)), taus)
+  
+  #append tau dataset to pedon information
+  dftaus <- as.data.frame(cbind(mastersub, ltaus, stringsAsFactors = FALSE))
+  
+  #dynamic number of element columns
+  numb <- ncol(mastersub) - firstcol + 1
+  
+  #rename the columsn to make sense
+  colnames(dftaus)[seq(from = ncol(mastersub)+1, to = ncol(mastersub)+numb)] <- colnames(dftaus[(seq(from = ncol(mastersub)-(numb-1), to = ncol(mastersub)))])
+  colnames(dftaus)[seq(from = ncol(mastersub)+1, to = ncol(mastersub)+numb)] <- paste("tau", colnames(dftaus)[seq(from = ncol(mastersub)+1, to = ncol(mastersub)+numb)], sep = "_")
+  
+  #export the tau values so you can use them later
+  write.csv(dftaus, file = paste0("tau/exports/values_tau/hb/taus",pit,"_Cax.csv"))
+  
+}
 ```
