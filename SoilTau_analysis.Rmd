@@ -1,0 +1,79 @@
+---
+title: "SoilTauAnalysis"
+author: "Jenny Bower"
+date: "4/30/2021"
+output: html_document
+---
+```{r}
+library(readxl)
+library(tidyverse)
+library('reshape')
+library('plyr')
+```
+
+```{r}
+nocsvs <- print(list.files('tau/exports/values_tau/hb'))
+csvlist <- list()
+for(a in seq_along(c(1:length(nocsvs)))){
+  csvdata <- read.csv(paste0('tau/exports/values_tau/hb/',nocsvs[a]), header = TRUE, sep = ",")
+  csvlist[[a]] <- csvdata
+}
+data <- do.call(rbind, csvlist) 
+```
+
+```{r}
+elem <- c("Ca","Fe","Al")
+elemtau <- paste0("tau_",elem)
+sub <- data[,elemtau]
+datasub <- cbind(Pedon = data$Pedon, Name = data$Name, TDepth = data$TDepth, BDepth = data$BDepth, Thick = data$BDepth-data$TDepth, sub)
+noOa <- datasub[!grepl("Oa", datasub$Name),]
+noC <- noOa[!grepl("C", noOa$Name),]
+noD <- noC[!grepl("D", noC$Name),]
+
+noD <- noOa[!grepl("D", noC$Name),]
+noA <- noD[!grepl("A", noD$Name),]
+#depth30 <- noA[noA$BDepth < 30,]
+#depth40 <- noA[noA$BDepth < 40,]
+noPFM <- noA[!grepl("PFM", noA$Pedon),]
+withtrans <- cbind(noPFM, trans = substr(noPFM$Pedon,1,2))
+withhpu <- cbind(withtrans, hpu = substr(withtrans$Pedon,4,4))
+```
+
+```{r}
+#compare tau for e horizons?
+lunch <- function(grill) {
+  grilled <- melt(grill, id=c("Name", "Pedon", "TDepth", "BDepth", "Thick", "trans", "hpu"))
+  cheese <- ddply(grilled, c("Pedon", "variable", "trans", "hpu"), summarise,
+                  N = length(Pedon),
+                  mean = weighted.mean(value, Thick),
+                  sd = sd(value),
+                  se = sd / sqrt(N),
+                  ogmean = mean(value))
+}
+
+eat <- lunch(withhpu)
+
+grill <- melt(withhpu, id=c("Name", "Pedon", "TDepth", "BDepth", "Thick", "trans", "hpu"))
+
+one <- subset(grill, grill$trans == 42)
+two <- subset(grill, grill$trans == 52)
+three <- subset(grill, grill$trans == 86)
+all <- grill
+
+#eat30 <- lunch(depth30)
+#eat40 <- lunch(depth40)
+
+first <- subset(eat, eat$trans == 42)
+second <- subset(eat, eat$trans == 52)
+third <- subset(eat, eat$trans == 86)
+
+prettylabs <- c("E podzol", "Bhs podzol", "Typical podzol")
+cols <- c("#e41a1c","#377eb8","#4daf4a")
+
+p1 <- ggplot(all, aes(x = hpu, y = value, weight = Thick, color = variable)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point(shape = 3, position = position_jitterdodge()) + theme_classic() + labs(title = "", x = "", y = expression(τ)) + scale_y_continuous(breaks = c(-0.5,0,0.5)) + theme(legend.position = "right") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.y = element_text(size=12)) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_blank(), axis.title.y = element_text(size=15, face="plain")) + scale_color_manual(values=c("#e41a1c","#377eb8","#4daf4a"))
+#add geometry of just points (behind?) and make colorful
+p1
+
+
+
+```

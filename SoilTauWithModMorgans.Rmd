@@ -85,11 +85,11 @@ ratio <- as.data.frame(master$Ti/master$Zr, stringsAsFactors = FALSE)
 ratioavg <- avg$Ti/avg$Zr
 
 #create data frames to work with
-masters <- cbind.data.frame(Pedon = as.vector(master$pedon), TDepth = master$`top cm`, BDepth = master$`base cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], Cax = master$Ca_mgKg, subs, stringsAsFactors = FALSE)
-avgs <- cbind(Pedon = avg$pedon, TDepth = avg$top.cm, BDepth = avg$base.cm, Depth = avg$base.cm+((avg$top.cm-avg$base.cm)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, Cax = "", subsavg, stringsAsFactors = FALSE)
+masters <- cbind.data.frame(Pedon = master$pedon, TDepth = master$`top cm`, BDepth = master$`base cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], Cax = master$Ca_mgKg, Ca = subs, stringsAsFactors = FALSE)
+avgs <- cbind.data.frame(Pedon = avg$pedon, TDepth = avg$top.cm, BDepth = avg$base.cm, Depth = avg$base.cm+((avg$top.cm-avg$base.cm)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, Cax = "", Ca = subsavg, stringsAsFactors = FALSE)
 
 #loop for exporting and plotting tau values
-peds <- unique(as.vector(master$pedon))
+peds <- unique(master$pedon)
 
 for(a in c(1:length(peds))){
   pit <- peds[a]
