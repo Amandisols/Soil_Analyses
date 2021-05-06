@@ -29,9 +29,11 @@ datasub <- cbind(Pedon = data$Pedon, Name = data$Name, TDepth = data$TDepth, BDe
 noOa <- datasub[!grepl("Oa", datasub$Name),]
 noC <- noOa[!grepl("C", noOa$Name),]
 noD <- noC[!grepl("D", noC$Name),]
+
+noD <- noOa[!grepl("D", noC$Name),]
 noA <- noD[!grepl("A", noD$Name),]
-depth30 <- noA[noA$BDepth < 30,]
-depth40 <- noA[noA$BDepth < 40,]
+#depth30 <- noA[noA$BDepth < 30,]
+#depth40 <- noA[noA$BDepth < 40,]
 noPFM <- noA[!grepl("PFM", noA$Pedon),]
 withtrans <- cbind(noPFM, trans = substr(noPFM$Pedon,1,2))
 withhpu <- cbind(withtrans, hpu = substr(withtrans$Pedon,4,4))

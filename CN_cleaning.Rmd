@@ -1,0 +1,25 @@
+---
+title: "CN_cleaning"
+author: "Jenny Bower"
+date: "5/6/2021"
+output: html_document
+---
+
+```{r}
+library(readxl)
+library(tidyverse)
+
+```
+
+Import the data.
+```{r}
+data <- read_excel("data/processed/CN.xlsx", sheet = "Sheet1")
+
+```
+
+The below subsets the data to samples, and adds columns that calculate organic matter (OM) from carbon data as a percent, and a proportion, as well as calculating bulk density from Federer et al. (1993).
+```{r}
+sub <- subset(data, type == "sample")
+added <- cbind(sub, horizon_id = paste0(sub$pedon,"_",sub$horizon), om_pct = sub$C_pct*1.724, om = (sub$C_pct*1.724)/100, bd = (0.111*1.45)/((1.45*(sub$C_pct*1.724)/100)+((1-(sub$C_pct*1.724)/100)*0.111)))
+
+```

@@ -58,7 +58,6 @@ library('svglite')
   cheese <- melt(chees, id=c("Horizon","TDepth","BDepth","Depth", "Name", "Pit", "Type"))
   cheesy <- cbind(cheese, Element = substr(cheese$variable,5,6))
   #below is for avged
-  print(cheesy)
   #below is for individual
   #cheesed <- ddply(cheesy, c("Name","Type","Element"), summarise,
   cheesed <- ddply(cheesy, c("Horizon","Type","Element","Pit"), summarise,
