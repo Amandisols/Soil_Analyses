@@ -30,4 +30,5 @@ Now we can link it to the main horizon database and all 111 records should merge
 horizonsadded <- cbind(horizons, name = paste0(horizons$pedon,"_",horizons$horizon))
 join <- inner_join(horizonsadded, added, by = c("name"="horizon_id"))
 
+
 ```

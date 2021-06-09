@@ -12,28 +12,34 @@ library(tidyverse)
 
 
 ```{r}
-DATA <- read_excel("data/raw/CationExtractions_raw.xlsx", sheet = "data")
+DATA <- read_excel("data/raw/HB_MM_extractablecations_raw.xlsx", sheet = "Conc. in Sample Units")
 
 ```
 
 ```{r}
 #replace below detection limits with NAs
-DATA[DATA == "-99.99"] <- NA
+#DATA[DATA == "-99.99"] <- NA
 
 #isolate blanks, remove outliers, find the mean
-BLANKS <-subset(DATA, Lab_id == "Blank")
+BLANKS <-subset(DATA, ID == "Blank")
 
 BLANKS <- BLANKS[-2,]
 
-#BLANKS <- BLANKS %>%
-  summarise_at(.vars = vars(Mn_mgL:S_mgL), .funs = mean, na.rm =T) 
+BLANKS <- BLANKS %>%
+  summarise_at(.vars = vars(Ca_mgL:Mn_mgL), .funs = mean, na.rm =T) 
                    
 #subtract blanks from measurements
-DATA <- subset(DATA, Lab_id != "Blank")
+DATA <- subset(DATA, ID != "Blank")
 
 DATA$Ca_mgL <- DATA$Ca_mgL - BLANKS$Ca_mgL
 DATA$P_mgL <- DATA$P_mgL - BLANKS$P_mgL
-DATA$S_mgL <- DATA$S_mgL - BLANKS$S_mgL
+DATA$K_mgL <- DATA$K_mgL - BLANKS$K_mgL
+DATA$Mg_mgL <- DATA$Mg_mgL - BLANKS$Mg_mgL
+DATA$Na_mgL <- DATA$Na_mgL - BLANKS$Na_mgL
+DATA$Al_mgL <- DATA$Al_mgL - BLANKS$Al_mgL
+DATA$Fe_mgL <- DATA$Fe_mgL - BLANKS$Fe_mgL
+DATA$Mn_mgL <- DATA$Mn_mgL - BLANKS$Mn_mgL
+
 ```
 ppm to cmol/kg (same as meq/100g)
 ```{r}
@@ -59,11 +65,17 @@ mgKg <- mgKg_fun(DATA$K_mgL)
 DATA$K_mgKg = mgKg
 DATA$K_cmolKg <- (DATA$K_mgKg/(39.1/1)/10)
 
+mgKg <- mgKg_fun(DATA$Al_mgL)
+DATA$Al_mgKg = mgKg
+
 mgKg <- mgKg_fun(DATA$P_mgL)
 DATA$P_mgKg = mgKg
 
-mgKg <- mgKg_fun(DATA$S_mgL)
-DATA$S_mgKg = mgKg
+mgKg <- mgKg_fun(DATA$Fe_mgL)
+DATA$Fe_mgKg = mgKg
+
+mgKg <- mgKg_fun(DATA$Mn_mgL)
+DATA$Mn_mgKg = mgKg
 
 DATA$CEC_cmolKg <- rowSums(DATA[,c("Ca_cmolKg", "Na_cmolKg", "Mg_cmolKg", "K_cmolKg")], na.rm = TRUE)
 ```
@@ -72,7 +84,7 @@ DATA$CEC_cmolKg <- rowSums(DATA[,c("Ca_cmolKg", "Na_cmolKg", "Mg_cmolKg", "K_cmo
 
 out_dir <- "data/processed"
 
-write_csv(DATA, paste(out_dir, "ExtractableCationsVTExtractionRun.csv", sep = "/"))
+write_csv(DATA, paste(out_dir, "ExtractableCationsVTExtractionReRun.csv", sep = "/"))
 ```
 
 

@@ -14,7 +14,7 @@ library('car')
 library('dunn.test')
 
 #to do: incorporate bulk density, make applicable to soil and rock alike
-setwd("~/Documents/uvm/phd/research/data/elemental")
+setwd("~/Documents/uvm/phd/research/data/lab/Exchangeable/VT/Soil_Analyses/tau/exports/")
 
 nocsvs <- print(list.files('values_tau/hb/'))
 taulist <- list()
@@ -47,102 +47,49 @@ for(a in c(1:nrow(taudatas))){
 }
 
 prettylabs <- c("Lateral E", "Lateral Bhs", "Vertical E", "Vertical Bhs", "Deep C")
-
 sdata <- cbind(taudatas, Cat = str_c(taudatas$LV, taudatas$Hor))
 
-dpc <- read_csv("extra/hb_soil_alldeep.csv")
+write.csv(sdata, "datalist.csv")
+sdata <- read.csv("values_tau/processed/datalist.csv", header = TRUE, stringsAsFactors = FALSE)
+
+dpc <- read_csv("../extra/hb_soil_alldeep.csv")
 cdata <- cbind(dpc, LV = "", Hor = "", Cat = "DC")
 
 names(cdata) <- names(sdata)
-
 soildata <- rbind(sdata, cdata)
-
 soilsub <- subset(soildata, soildata$Cat == "LE" | soildata$Cat == "LBhs" | soildata$Cat == "VE" | soildata$Cat == "VBhs" | soildata$Cat == "DC")
-
 soilsub$Cat <- factor(soilsub$Cat, levels=c("LE", "LBhs", "VE", "VBhs", "DC"))
-
-#modify this to be dynamic sel_elem <- c('Fe', 'Si', 'Ca', 'P')
-#stat_box_data <- function(y, upper_limit = 1.5) {
-#  return( 
-#    data.frame(
-#      y = 0.95 * upper_limit,
-#      label = paste('count =', length(y), '\n',
-#                    'mean =', round(mean(y), 1), '\n')
-#    )
-#  )
-#}
-
-#for mean only:
-#stat_box_data <- function(y, upper_limit = 1) {
-#  return( 
-#    data.frame(
-#      y = 0.95 * upper_limit,
-#      label = paste('mean =', round(mean(y), 1), '\n')
-#    )
-#  )
-#}
-
-#p1 <- ggplot(soilsub, aes(x = Cat, y = tau_Al, fill = Cat)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = expression(τ[Al])) + stat_summary(
-#  fun.data = stat_box_data, 
-#  geom = "text", 
-#  hjust = 0.5,
-#  vjust = 0.9
-#) + theme(legend.position = "none") + ggtitle("Soil fine fraction") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.x = element_text(size=12), axis.text.y = element_text(size=12)) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_text(size=20, face="plain"), axis.title.y = element_text(size=20, face="plain"))
+soilsub <- soilsub[!(soilsub$Pedon == "52_3_X3.1" & soilsub$Cat == "LE"),]
 
 p1 <- ggplot(soilsub, aes(x = Cat, y = tau_Al, fill = Cat)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = expression(τ[Al])) + scale_y_continuous(breaks = c(-0.5,0,0.5)) + theme(legend.position = "none") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.y = element_text(size=12)) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_blank(), axis.title.y = element_text(size=15, face="plain"))
-p1
 p2 <- ggplot(soilsub, aes(x = Cat, y = tau_Ca, fill = Cat)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = expression(τ[Ca])) + theme(legend.position = "none") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.y = element_text(size=12)) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_blank(), axis.title.y = element_text(size=15, face="plain"))
-
 p3 <- ggplot(soilsub, aes(x = Cat, y = tau_Fe, fill = Cat)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = expression(τ[Fe])) + theme(legend.position = "none") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.y = element_text(size=12)) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_text(size=15, face="plain"), axis.title.y = element_text(size=15, face="plain"))
 
 grid.arrange(p1, p2, p3, nrow = 3)
-
 g <- arrangeGrob(p1, p2, p3, nrow=3)
+ggsave(filename = "all3_soil_box_withextra.png", g)
 
-ggsave(filename = "all3_soil_box.png", g)
+grilled <- melt(soilsub, id=c("X","Pedon","TDepth","BDepth","Name","Depth","Cat","LV","Hor"))
+grilled
+cheese <- ddply(grilled, c("Pedon", "variable", "Cat"), summarise,
+                  N = length(Pedon),
+                  mean = mean(value),
+                  sd = sd(value),
+                  se = sd / sqrt(N))
 
- #p <- ggplot(soilsub, aes(x = LatVert, y = TiO2, fill = LatVert)) + geom_violin() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = "TiO2") + stat_summary(
-#  fun.data = stat_box_data, 
-#  geom = "text", 
-#  hjust = 0.5,
-#  vjust = 0.9
-#) + theme(legend.position = "none") + ggtitle("Soil fine fraction") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.x = element_text(size=12), axis.text.y = element_text(size=12)) + ylim(0,1.5) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_text(size=20, face="plain"), axis.title.y = element_text(size=20, face="plain"))
-
-#(rocksub$tau_Na2O) * 1.3)
-stat_box_data <- function(y, upper_limit = 1.5) {
-  return( 
-    data.frame(
-      y = 0.95 * upper_limit,
-      label = paste('count =', length(y), '\n',
-                    'mean =', round(mean(y), 1), '\n')
-    )
-  )
-}
-rocksub$LatVert <- factor(rocksub$LatVert, levels=c("LE", "LB", "VE", "VB", "C"))
-#p <- ggplot(rocksub, aes(x = LatVert, y = TiO2, fill = LatVert)) + geom_violin() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = "[TiO2]") + stat_summary(
-#  fun.data = stat_box_data, 
-#  geom = "text", 
-#  hjust = 0.5,
-#  vjust = 0.9
-#) + theme(legend.position = "none") + ggtitle("Rock fragment") + theme(plot.title = element_text(size=20,face="bold")) + ylim(0,1.5) + theme(axis.text.x = element_text(size=12), axis.text.y = element_text(size=12)) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_text(size=15, face="plain"), axis.title.y = element_text(size=15, face="plain"))
-p <- ggplot(rocksub, aes(x = LatVert, y = tau_Ca, fill = LatVert)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point() + theme_classic() + labs(title = "", x = "Horizon", y = expression(τ[Ca])) + stat_summary(
-  fun.data = stat_box_data, 
-  geom = "text", 
-  hjust = 0.5,
-  vjust = 0.9
-) + theme(legend.position = "none") + ggtitle("Rock fragment") + theme(plot.title = element_text(size=20,face="bold")) + ylim(-1,1.5) + theme(axis.text.x = element_text(size=12), axis.text.y = element_text(size=12)) + scale_fill_manual(values = c("#cccccc","#90593f","#cccccc","#90593f","#fcff54")) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_text(size=15, face="plain"), axis.title.y = element_text(size=15, face="plain"))
-p
-ggsave(filename = "ca_rock_violin.png")
-
-#qqplot
 qqPlot(soilsub$tau_SiO2)
 
+#take out lateral E from Bhs
+cheese2 <- cheese[!(cheese$Pedon == "52_3_X3.1" & cheese$Cat == "LE"),]
+write.csv(cheese2,"values_tau/processed/means_datalist2.csv")
+
 #anova
-test <- aov(formula = tau_P ~ Cat, data = soilsub)
-summary(test)
-TukeyHSD(test)
+test <- aov(formula = tau_Ca ~ Cat, data = soilsub)
 plot(test, 1)
 plot(test, 2)
+leveneTest(tau_Ca ~ Cat, data = soilsub)
+TukeyHSD(test)
+
 
 le <- filter(soilsub, Cat == "LE")
 lb <- filter(soilsub, Cat == "LBhs")
@@ -152,15 +99,20 @@ c <- filter(soilsub, Cat == "DC")
 
 hist(c$Ti)
 
-soilsub
+avo <- cheese[,1:5]
+bread <- pivot_wider(avo, names_from = variable, values_from = mean)
+nobutter <- bread[which(bread$Cat != "DC"),]
+nopickle <- nobutter[which(nobutter$Cat != "LBhs" & nobutter$Cat != "VBhs"),]
 
-ktest <- kruskal.test(Ti ~ Cat, data = soilsub)
+ktest <- kruskal.test(tau_Ca ~ Cat, data = nobutter)
 ktest
 
-dunn.test(soilsub$tau_P, soilsub$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(soilsub$tau_Al, soilsub$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(soilsub$tau_Si, soilsub$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(soilsub$tau_Ca, soilsub$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(soilsub$Ti, soilsub$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+dunn.test(nobutter$tau_P, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+dunn.test(nobutter$tau_Al, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+dunn.test(nobutter$tau_Si, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+dunn.test(nopickle$tau_Ca, nopickle$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+dunn.test(nobutter$Ti, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
 
-nrow(c)
+?dunn.test()
+
+?dunn.test
