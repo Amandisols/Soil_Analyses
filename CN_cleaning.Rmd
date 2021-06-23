@@ -14,7 +14,7 @@ library(tidyverse)
 Import the data.
 ```{r}
 data <- read_excel("data/processed/CN.xlsx", sheet = "Sheet1")
-horizons <- read_excel(paste0('data/raw/hb_pedons_analysis_0426.xlsx'))
+horizons <- read_excel(paste0("data/raw/hb_pedons_analysis_0426.xlsx"))
 
 ```
 
@@ -29,6 +29,18 @@ Now we can link it to the main horizon database and all 111 records should merge
 ```{r}
 horizonsadded <- cbind(horizons, name = paste0(horizons$pedon,"_",horizons$horizon))
 join <- inner_join(horizonsadded, added, by = c("name"="horizon_id"))
+write_csv(join, "data/processed/CN_analysis.csv")
 
+#the below script could be used to classify humods, but it doesn't catch pedons that were incrementally sampled (can always modify if needed)
+#humod <- cbind(join, humod = "")
+#for(a in seq(1:nrow(humod))){
+#  if((startsWith(humod$orig_horizon[a], "B")) & (humod$thick[a] > 10) & (humod$C_pct[a] > 6)){
+#    humod$humod[a] <- "y"
+#  }
+#  else{
+#    humod$humod[a] <- "n"
+#  }
+#}
+#(startsWith(humod$orig_horizon[a], "B")) && (humod$thick[a] > 10) && (humod$C_pct[a] > 6)
 
 ```

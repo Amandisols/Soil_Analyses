@@ -9,7 +9,7 @@ library('tidyverse')
 library('ggplot2')
 library('reshape')
 library('gridExtra')
-library('plyr')
+library('dplyr')
 library('car')
 library('dunn.test')
 
@@ -52,6 +52,7 @@ sdata <- cbind(taudatas, Cat = str_c(taudatas$LV, taudatas$Hor))
 write.csv(sdata, "datalist.csv")
 sdata <- read.csv("values_tau/processed/datalist.csv", header = TRUE, stringsAsFactors = FALSE)
 
+#added extra pedons and took out PFM Bhs horizon
 dpc <- read_csv("../extra/hb_soil_alldeep.csv")
 cdata <- cbind(dpc, LV = "", Hor = "", Cat = "DC")
 
@@ -76,12 +77,13 @@ cheese <- ddply(grilled, c("Pedon", "variable", "Cat"), summarise,
                   mean = mean(value),
                   sd = sd(value),
                   se = sd / sqrt(N))
+cheese
 
-qqPlot(soilsub$tau_SiO2)
+qqPlot(soilsub$tau_Si)
 
 #take out lateral E from Bhs
 cheese2 <- cheese[!(cheese$Pedon == "52_3_X3.1" & cheese$Cat == "LE"),]
-write.csv(cheese2,"values_tau/processed/means_datalist2.csv")
+write.csv(cheese2,"values_tau/processed/means_datalist1.csv")
 
 #anova
 test <- aov(formula = tau_Ca ~ Cat, data = soilsub)
@@ -102,10 +104,36 @@ hist(c$Ti)
 avo <- cheese[,1:5]
 bread <- pivot_wider(avo, names_from = variable, values_from = mean)
 nobutter <- bread[which(bread$Cat != "DC"),]
-nopickle <- nobutter[which(nobutter$Cat != "LBhs" & nobutter$Cat != "VBhs"),]
+nopickle <- nobutter[which(nobutter$Cat != "VBhs" & nobutter$Cat != "VE"),]
+sandy <- nobutter[which(nobutter$Cat != "LBhs" & nobutter$Cat != "VBhs"),]
 
 ktest <- kruskal.test(tau_Ca ~ Cat, data = nobutter)
+
+le2 <- filter(nobutter, Cat == "LE")
+ve2 <- filter(nobutter, Cat == "VE")
+vbhs2 <- filter(nobutter, Cat == "VBhs")
+lbhs2 <- filter(nobutter, Cat == "LBhs")
+
+wilcox.test(ve2$tau_Fe, le2$tau_Fe, alternative = "two.sided")
+
+prettylabs <- c("Lateral E", "Vertical E")
+
+png(filename=paste0("dual_boxplot_3.png"), 
+    units="in", 
+    width=5, 
+    height=6, 
+    pointsize=12, 
+    res=400)
+ggplot(sandy, aes(x = Cat, y = tau_Al, fill = Cat), color = "gray") +
+  scale_y_continuous(breaks = c(-1,0,0.5)) + ylim(-1,0.2) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot(outlier.shape = NA) + geom_point(size = 3, alpha = 0.5, shape = 2, position = position_jitterdodge(jitter.width = 1)) + theme_classic() + scale_x_discrete(labels = prettylabs) + labs(y = expression(τ[Ca])) + theme(legend.position = 'none', axis.title.x = element_blank(), axis.text.x = element_text(size = 12), axis.title.y = element_text(size = 20), axis.text.y = element_text(size = 12)) + scale_fill_manual(values = c("#cccccc", "#fcff54"))
+dev.off()
+
+hist(ve$tau_Ca)
+shapiro.test(le$tau_Ca)
+
 ktest
+
+#normality assumption is met for the whole dataset
 
 dunn.test(nobutter$tau_P, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
 dunn.test(nobutter$tau_Al, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)

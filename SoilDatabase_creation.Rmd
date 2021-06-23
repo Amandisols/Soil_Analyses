@@ -35,17 +35,17 @@ DATA <- DATA %>% select(-c(pH_id, pedon.y, horizon.y, Dilution_pH, Notes, Date))
 
 Carbon, Nitrogen
 ```{r}
-CN <- read_excel("data/processed/CN.xlsx")
+CN <- read_csv("data/processed/CN_analysis.csv")
 
 CN <- subset(CN, type == "sample")
 
-CN$ID <- paste(CN$pedon, CN$horizon)
+CN$ID <- paste(CN$pedon.x, CN$horizon.x)
 
-CN <- CN %>% select(C_pct, N_pct, CNRatio, ID)
+CN <- CN %>% select(C_pct, N_pct, CNRatio, om_pct, om, bd, ID)
 
 DATA <- full_join(DATA, CN, by = "ID")
 
-DATA <- DATA %>% mutate_at(vars(C_pct:CNRatio), funs(round(., 5)))
+DATA <- DATA %>% mutate_at(vars(C_pct:bd), funs(round(., 5)))
 
 
 ```
