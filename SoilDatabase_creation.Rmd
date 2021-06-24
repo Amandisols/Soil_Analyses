@@ -52,14 +52,14 @@ DATA <- DATA %>% mutate_at(vars(C_pct:bd), funs(round(., 5)))
 
 ```{r}
 
-Cations <- read_csv("data/processed/ExtractableCations.csv")
+Cations <- read_csv("data/processed/ExtractableCationsVTExtractionReRun_final.csv")
 
 #Below detection limit
-Cations[,4:20][is.na(Cations[,4:20])] = -9999.999
+#Cations[,4:20][is.na(Cations[,4:20])] = -9999.999
 
-Cations$ID <- paste(Cations$pedon, Cations$horizon)
+Cations$ID <- paste(Cations$Pedon, Cations$Horizon)
 
-Cations <- Cations %>% select(ID, Ca_cmolKg, Na_cmolKg, Mg_cmolKg, K_cmolKg, CEC_cmolKg)
+Cations <- Cations %>% select(ID, Ca_cmolKg, Na_cmolKg, Mg_cmolKg, K_cmolKg, Al_cmolKg, P_mgKg, Fe_mgKg, Mn_mgKg, CEC_cmolKg)
 
 DATA <- full_join(DATA, Cations, by = "ID")
 
