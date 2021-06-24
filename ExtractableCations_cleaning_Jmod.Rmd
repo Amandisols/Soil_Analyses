@@ -67,6 +67,7 @@ DATA$K_cmolKg <- (DATA$K_mgKg/(39.1/1)/10)
 
 mgKg <- mgKg_fun(DATA$Al_mgL)
 DATA$Al_mgKg = mgKg
+DATA$Al_cmolKg <- (DATA$Al_mgKg/(26.98/3)/10)
 
 mgKg <- mgKg_fun(DATA$P_mgL)
 DATA$P_mgKg = mgKg
