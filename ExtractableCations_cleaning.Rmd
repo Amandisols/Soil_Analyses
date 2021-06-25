@@ -25,7 +25,7 @@ BLANKS <-subset(DATA, Lab_id == "Blank")
 
 BLANKS <- BLANKS[-2,]
 
-#BLANKS <- BLANKS %>%
+BLANKS <- BLANKS %>%
   summarise_at(.vars = vars(Mn_mgL:S_mgL), .funs = mean, na.rm =T) 
                    
 #subtract blanks from measurements
@@ -39,7 +39,7 @@ ppm to cmol/kg (same as meq/100g)
 ```{r}
 
 mgKg_fun<- function(mgL) {
-  DATA <- DATA %>% mutate(mgKg = mgL * (20/4) * (1/1000) * 1000)
+  DATA <- DATA %>% mutate(mgKg = mgL * (50/5) * (1/1000) * 1000)
   return(DATA$mgKg)
 }
 
