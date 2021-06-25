@@ -43,7 +43,13 @@ DATA$Mn_mgL <- DATA$Mn_mgL - BLANKS$Mn_mgL
 ```
 ppm to cmol/kg (same as meq/100g)
 ```{r}
+#use below for VT extractions
+mgKg_fun<- function(mgL) {
+  DATA <- DATA %>% mutate(mgKg = mgL * (50/5) * (1/1000) * 1000)
+  return(DATA$mgKg)
+}
 
+#use below for UVM extractions
 mgKg_fun<- function(mgL) {
   DATA <- DATA %>% mutate(mgKg = mgL * (20/4) * (1/1000) * 1000)
   return(DATA$mgKg)
