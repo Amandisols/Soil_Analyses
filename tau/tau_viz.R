@@ -16,6 +16,7 @@ library('dunn.test')
 #to do: incorporate bulk density, make applicable to soil and rock alike
 setwd("~/Documents/uvm/phd/research/data/lab/Exchangeable/VT/Soil_Analyses/tau/exports/")
 
+#fix all this so it looks better
 nocsvs <- print(list.files('values_tau/hb/'))
 taulist <- list()
 for(a in seq_along(c(1:length(nocsvs)))){
@@ -101,7 +102,7 @@ c <- filter(soilsub, Cat == "DC")
 
 hist(c$Ti)
 
-avo <- cheese[,1:5]
+avo <- cheese2[,1:5]
 bread <- pivot_wider(avo, names_from = variable, values_from = mean)
 nobutter <- bread[which(bread$Cat != "DC"),]
 nopickle <- nobutter[which(nobutter$Cat != "VBhs" & nobutter$Cat != "VE"),]
@@ -114,18 +115,22 @@ ve2 <- filter(nobutter, Cat == "VE")
 vbhs2 <- filter(nobutter, Cat == "VBhs")
 lbhs2 <- filter(nobutter, Cat == "LBhs")
 
-wilcox.test(ve2$tau_Fe, le2$tau_Fe, alternative = "two.sided")
+wilcox.test(ve2$tau_Al, le2$tau_Al, alternative = "two.sided")
+wilcox.test(ve2$tau_Al, vbhs2$tau_Al, alternative = "two.sided")
+wilcox.test(le2$tau_Al, lbhs2$tau_Al, alternative = "two.sided")
 
 prettylabs <- c("Lateral E", "Vertical E")
+#cccccc
+#fcff54
 
-png(filename=paste0("dual_boxplot_3.png"), 
+png(filename=paste0("dual_boxplot_7.png"), 
     units="in", 
     width=5, 
     height=6, 
     pointsize=12, 
     res=400)
-ggplot(sandy, aes(x = Cat, y = tau_Al, fill = Cat), color = "gray") +
-  scale_y_continuous(breaks = c(-1,0,0.5)) + ylim(-1,0.2) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot(outlier.shape = NA) + geom_point(size = 3, alpha = 0.5, shape = 2, position = position_jitterdodge(jitter.width = 1)) + theme_classic() + scale_x_discrete(labels = prettylabs) + labs(y = expression(τ[Ca])) + theme(legend.position = 'none', axis.title.x = element_blank(), axis.text.x = element_text(size = 12), axis.title.y = element_text(size = 20), axis.text.y = element_text(size = 12)) + scale_fill_manual(values = c("#cccccc", "#fcff54"))
+ggplot(sandy, aes(x = Cat, y = tau_Al, fill = Cat), color = "black") +
+  scale_y_continuous(breaks = c(-1,0,0.5)) + ylim(-1,0.2) + geom_hline(yintercept=0, linetype="dashed", color = "dark grey", size = 1) + geom_boxplot(outlier.shape = NA) + geom_point(size = 4, alpha = 0.5, shape = 2, position = position_jitterdodge(jitter.width = 1)) + theme_classic() + scale_x_discrete(labels = prettylabs) + labs(y = expression(τ[Al])) + theme(legend.position = 'none', axis.title.x = element_blank(), axis.text.x = element_text(size = 20), axis.title.y = element_text(size = 30), axis.text.y = element_text(size = 16)) + scale_fill_manual(values = c("#cccccc", "#fcff54"))
 dev.off()
 
 hist(ve$tau_Ca)

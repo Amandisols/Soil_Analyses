@@ -60,23 +60,24 @@ for(b in seq_along(c(1:nrow(elem)))){
   }
   joinlist[[b]] <- zippy
 }
-zippyjoin <- cbind(elem,do.call(rbind, joinlist))
+zippyjoin <- cbind(elem, do.call(rbind, joinlist))
 
 #rename column
-colnames(zippyjoin)[23] <- "newname"
+colnames(zippyjoin)[24] <- "newname"
 
 #join elemental data to horizon data
 innerjoin <- inner_join(zippyjoin, datas, by = c("newname" = "Name"))
 
 #export if you want to look at it
-#write.csv(innerjoin, file = paste0("values_elem/hbelem210303.csv"))
+write.csv(innerjoin, file = paste0("exports/values_elem/hbelem210709.csv"))
 
 #add midpoint column !NOTE: MUST BE IN DEPTH ORDER!
 mids <- numeric(length = nrow(innerjoin))
 for(a in seq_along(c(1:nrow(innerjoin)))){
-  mids[a] <- as.numeric((innerjoin[a,4]+innerjoin[a,5])/2)
+  mids[a] <- as.numeric((innerjoin[a,5]+innerjoin[a,6])/2)
 }
-master <- as.data.frame(cbind(pedon = innerjoin[,1], mids, innerjoin[,4:5], innerjoin[,(ncol(elem)+1):ncol(innerjoin)]), stringsAsFactors = FALSE)
+print(innerjoin)
+master <- as.data.frame(cbind(pedon = innerjoin[,1], mids, innerjoin[,5:6], innerjoin[,(ncol(elem)+1):ncol(innerjoin)]), stringsAsFactors = FALSE)
 
 #this csv is the average taken of all samples greater than 1 meter in depth, already adjusted to mg kg
 avg <- read.csv('index/hb_soil_avg16.csv', header = TRUE, sep = ",")
@@ -87,7 +88,6 @@ names(innerjoin[,(ncol(elem)+2):ncol(innerjoin)])
 #list elements you're interested in for tau
 sel_elem <- c('Fe', 'Al', 'Si', 'Mn', 'Ca', 'P', 'K', 'Ce')
 
-master
 #subset to just the elements wanted
 subs <- master[,sel_elem]
 subsavg <- avg[,sel_elem]
@@ -97,8 +97,8 @@ ratio <- as.data.frame(master$Ti/master$Zr, stringsAsFactors = FALSE)
 ratioavg <- avg$Ti/avg$Zr
 
 #create data frames to work with
-masters <- cbind(Pedon = master$pedon, TDepth = master$`top.cm`, BDepth = master$`base.cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], subs, stringsAsFactors = FALSE)
-avgs <- cbind(Pedon = avg$pedon, TDepth = avg$top.cm, BDepth = avg$base.cm, Depth = avg$base.cm+((avg$top.cm-avg$base.cm)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, subsavg, stringsAsFactors = FALSE)
+masters <- cbind(Pedon = master$pedon, TDepth = master$`top cm`, BDepth = master$`base cm`, Depth = master$mids, Name = master$newname, Ti = master$Ti, Zr = master$Zr, Y = master$Y, Ratio = ratio[,1], subs, stringsAsFactors = FALSE)
+avgs <- cbind(Pedon = avg$pedon, TDepth = avg$`top.cm`, BDepth = avg$`base.cm`, Depth = avg$`base.cm`+((avg$`top.cm`-avg$`base.cm`)/2), Name = avg$newname, Ti = avg$Ti, Zr = avg$Zr, Y = avg$Y, Ratio = ratioavg, subsavg, stringsAsFactors = FALSE)
 
 #loop for exporting and plotting tau values
 peds <- unique(as.vector(master$pedon))
@@ -139,10 +139,13 @@ for(a in c(1:length(peds))){
   colnames(dftaus)[seq(from = ncol(mastersub)+1, to = ncol(mastersub)+numb)] <- paste("tau", colnames(dftaus)[seq(from = ncol(mastersub)+1, to = ncol(mastersub)+numb)], sep = "_")
   
   #export the tau values so you can use them later
-  write.csv(dftaus, file = paste0("values_tau/hb/taus",pit,".csv"))
+  write.csv(dftaus, file = paste0("exports/values_tau/hb/taus",pit,".csv"))
   
   #select only the columns used in plotting
   tauplot <- dftaus %>% select(TDepth:Name,(firstcol+numb):(ncol(mastersub)+numb))
+  
+  #this snip is for titanium
+  tauplotti <- dftaus %>% select(TDepth:Y)
   
   #"melt" the data so you can colorize by element and plot multiple elements on the same plot
   cheese <- melt(tauplot, id=c("TDepth","BDepth","Depth", "Name"))
@@ -154,14 +157,19 @@ for(a in c(1:length(peds))){
   soilcolor <- subset(innerjoin, innerjoin$pedon == pit)
   soilcolors <- munsell2rgb(soilcolor$hue, soilcolor$value, soilcolor$chroma)
   soilcolors <- rep(soilcolors, length(sel_elem))
+  soilcolorsti <- munsell2rgb(soilcolor$hue, soilcolor$value, soilcolor$chroma)
   
   #generate the plots
-  p <- ggplot(cheese, aes(x = value, y = Depth, group = variable)) + scale_y_reverse(name='Depth (cm)', limits = c(100,0)) + scale_x_continuous(name='τ') + coord_cartesian(xlim=c(-1,1)) + geom_rect(aes(xmin= -Inf, xmax= Inf, ymin=BDepth-.1, ymax=TDepth+.1), fill = soilcolors, alpha=0.17, show.legend=FALSE) + geom_vline(xintercept=0, linetype="dashed", color = "#504c4c", size = 0.5)  + geom_path(aes(color=variable)) + geom_point(aes(color=variable)) + theme_classic() + scale_color_manual(values = cbbPalette) 
-  p <- p + ggtitle(pit)
-  p
+  #p <- ggplot(cheese, aes(x = value, y = Depth, group = variable)) + scale_y_reverse(name='Depth (cm)', limits = c(100,0)) + scale_x_continuous(name='τ') + coord_cartesian(xlim=c(-1,1)) + geom_rect(aes(xmin= -Inf, xmax= Inf, ymin=BDepth-.1, ymax=TDepth+.1), fill = soilcolors, alpha=0.17, show.legend=FALSE) + geom_vline(xintercept=0, linetype="dashed", color = "#504c4c", size = 0.5)  + geom_path(aes(color=variable)) + geom_point(aes(color=variable)) + theme_classic() + scale_color_manual(values = cbbPalette) 
+  #p <- p + ggtitle(pit)
+  #p
+  
+  #this is for ti plots only
+  p2 <- ggplot(tauplotti, aes(x = Ti, y = Depth)) + scale_y_reverse(name='Depth (cm)', limits = c(100,0)) + scale_x_continuous(name='[Ti]') + coord_cartesian(xlim=c(0,7000)) + geom_rect(aes(xmin= -Inf, xmax= Inf, ymin=BDepth-.1, ymax=TDepth+.1), fill = soilcolorsti, alpha=0.17, show.legend=FALSE) + geom_vline(xintercept=2503, linetype="dashed", color = "#504c4c", size = 0.5)  + geom_path(aes(color="black"), show.legend = FALSE) + geom_point(aes(color="black"), show.legend = FALSE) + theme_classic() + scale_color_manual(values = cbbPalette) + ggtitle(pit)
+  p2
   
   #save as png with custom settings
-  ggsave(paste0("png/",pit,"_evenmore.png"), width = 5, height = 5, units = "in", dpi = "print")
+  ggsave(paste0("exports/png/",pit,"_ti_only.png"), width = 5, height = 5, units = "in", dpi = "print")
 
 }
 

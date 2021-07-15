@@ -1,0 +1,59 @@
+---
+title: "Soil database creation"
+author: "Amanda Pennino"
+date: "4/22/2021"
+output: html_document
+---
+
+```{r}
+library(plyr)
+library(tidyverse)
+library(readxl)
+```
+
+Current database, create IDs
+```{r}
+DATA <- read_excel("data/raw/hb_pedons_analysis_0426.xlsx", sheet = "horizon data")
+DATA$orig_ID <- paste(DATA$pedon, DATA$orig_horizon)
+DATA$ID <- paste(DATA$pedon, DATA$horizon)
+```
+
+Combine subsampled horizons to give true thickness of each genetic horizon
+```{r}
+sum <- ddply(DATA, c("pedon", "orig_ID"), summarise,
+      N = length(orig_ID),
+      thick = sum(thick))
+
+sub <- subset(DATA, is.na(DATA$subdivision) | DATA$subdivision == 1)
+
+for(a in seq(1:nrow(sub))){
+  if(isTRUE(sub$subdivision[a] == 1)){
+    sub[a,7] <- sum[which(sum$orig_ID == sub$orig_ID[a]),4]
+    sub[a,6] <- sub[a,5] + sub[a,7]
+  }
+}
+```
+
+then calculate HPU by excluding transitional horizons (is not AE, EA, EB, BE, BC, CB) and adding up any that contain "Bhs", "E", "Bh", "Bs"
+this wont be necc for the auger one
+new column "interface" that marks whether there is an R horizon or C... this might be different for the auger investigation
+```{r}
+
+```
+
+
+if meets multiple conditions, concat two grades and mark "r" for review
+```{r}
+
+```
+
+export
+```{r}
+out_dir <- "data/processed"
+
+write_csv(DATA, paste(out_dir, "LATWAG_Soil_Database.csv", sep = "/"))
+
+```
+
+if you need to calculate averaged chemistry you can always use the sum data frame or calc and join
+
