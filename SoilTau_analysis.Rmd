@@ -40,7 +40,6 @@ withhpu <- cbind(withtrans, hpu = substr(withtrans$Pedon,4,4))
 ```
 
 ```{r}
-#compare tau for e horizons?
 lunch <- function(grill) {
   grilled <- melt(grill, id=c("Name", "Pedon", "TDepth", "BDepth", "Thick", "trans", "hpu"))
   cheese <- ddply(grilled, c("Pedon", "variable", "trans", "hpu"), summarise,
@@ -71,9 +70,7 @@ prettylabs <- c("E podzol", "Bhs podzol", "Typical podzol")
 cols <- c("#e41a1c","#377eb8","#4daf4a")
 
 p1 <- ggplot(all, aes(x = hpu, y = value, weight = Thick, color = variable)) + geom_hline(yintercept=0, linetype="dashed", color = "gray", size = 0.5) + geom_boxplot() + geom_point(shape = 3, position = position_jitterdodge()) + theme_classic() + labs(title = "", x = "", y = expression(τ)) + scale_y_continuous(breaks = c(-0.5,0,0.5)) + theme(legend.position = "right") + theme(plot.title = element_text(size=20,face="bold")) +  theme(axis.text.y = element_text(size=12)) + scale_x_discrete(labels = prettylabs) + theme(axis.title.x = element_blank(), axis.title.y = element_text(size=15, face="plain")) +  scale_color_manual(values=c("#e41a1c","#377eb8","#4daf4a"))
-#add geometry of just points (behind?) and make colorful
+
 p1
-
-
 
 ```
