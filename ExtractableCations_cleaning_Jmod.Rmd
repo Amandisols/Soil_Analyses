@@ -7,13 +7,19 @@ output: html_document
 ```{r}
 library(readxl)
 library(tidyverse)
-
 ```
 
-
 ```{r}
-DATA <- read_excel("data/raw/HB_MM_extractablecations_raw.xlsx", sheet = "Conc. in Sample Units")
-
+#DATA <- read_excel("data/raw/HB_MM_extractablecations_raw.xlsx", sheet = "Conc. in Sample Units")
+DATA <- read_excel("data/raw/ICP/HB_MM_extractablecations_raw.xlsx", sheet = "Conc. in Sample Units")
+LIST <- print(list.files("data/raw/ICP"))
+LIST <- LIST[LIST != c("orig", "HBExtractableCationsFINAL")]
+CSV <- list()
+for(a in seq_along(c(1:length(LIST)))){
+  CSVDATA <- read_excel(paste0("data/raw/ICP/",LIST[a]), sheet = "Conc. in Sample Units")
+  CSV[[a]] <- CSVDATA
+}
+DATA <- do.call(bind_rows, CSV) 
 ```
 
 ```{r}

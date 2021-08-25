@@ -1,0 +1,141 @@
+---
+title: "Extractable cations: Cleaning raw data"
+author: "Amanda Pennino"
+date: "4/22/2021"
+output: html_document
+---
+```{r}
+library(readxl)
+library(tidyverse)
+```
+
+```{r}
+#load data
+LIST <- print(list.files("data/raw/ICP"))
+LIST <- LIST[LIST != "orig"]
+LIST <- LIST[LIST != "HB_MM_extractablecations_raw.xlsx"]
+LIST <- LIST[LIST != "REG_SampleNames.xlsx"]
+CSV <- list()
+for(a in seq_along(c(1:length(LIST)))){
+  CSVDATA <- read_excel(paste0("data/raw/ICP/",LIST[a]), sheet = "Conc. in Sample Units")
+  CSV[[a]] <- CSVDATA
+}
+DATA <- do.call(bind_rows, CSV) 
+```
+
+load by site and separate by method
+```{r}
+#isolate to only samples
+BR <- DATA[grep("BR",DATA$`Sample Id`),]
+WB <- DATA[grep("WB",DATA$`Sample Id`),]
+DATA <- bind_rows(BR, WB)
+colnames(DATA)[8:16] <- c("Y_mgL", "P_mgL", "Ca_mgL", "K_mgL", "Mg_mgL", "Na_mgL", "Al_mgL", "Fe_mgL", "Mn_mgL")
+
+#separate by method
+DATA$`Method File` <- gsub('Soil CaCl2', 'CaCl2', DATA$`Method File`)
+DATA$`Method File` <- gsub('Soil Modified Morgan', 'MM', DATA$`Method File`)
+DATA$`Method File` <- gsub('Soil Mehlich3', 'M3', DATA$`Method File`)
+DATA <- cbind(DATA, Join = paste0(DATA$`Sample Id`, DATA$`Method File`))
+```
+
+get into usable form
+```{r}
+
+#load pedon and horizon information
+PEDONS <- read_excel("data/raw/ICP/REG_SampleNames.xlsx")
+PEDONS <- cbind(PEDONS, Join = paste0(PEDONS$`Sample Id`, PEDONS$Extraction))
+DATA <- left_join(DATA, PEDONS, by = c("Join" = "Join"))
+DATA <- cbind(DATA, HorizonId = paste0(DATA$Pedon, DATA$Horizon))
+
+#DO MORE WITH QC HERE (analyze)
+QC <- filter(DATA, HorizonId == "UBs-")
+DATA <- DATA[DATA$HorizonId != "UBs-",]
+DATA <- cbind(DATA, HorizonId2 = paste0(DATA$HorizonId, DATA$Extraction))
+DATA2 <- DATA %>% group_by(HorizonId2) %>% summarise(n = n(), meanP = mean(P_mgL), erP = abs(100*(mean(P_mgL)-first(P_mgL))/mean(P_mgL)), meanCa = mean(Ca_mgL), erCa = abs(100*(mean(Ca_mgL)-first(Ca_mgL))/mean(Ca_mgL)), meanK = mean(K_mgL), erK = abs(100*(mean(K_mgL)-first(K_mgL))/mean(K_mgL)), meanMg = mean(P_mgL), erMg = abs(100*(mean(Mg_mgL)-first(Mg_mgL))/mean(Mg_mgL)), meanNa = mean(Na_mgL), erNa = abs(100*(mean(Na_mgL)-first(Na_mgL))/mean(Na_mgL)), meanFe = mean(Fe_mgL), erFe = abs(100*(mean(Fe_mgL)-first(Fe_mgL))/mean(Fe_mgL)), meanAl = mean(Al_mgL), erAl = abs(100*(mean(Al_mgL)-first(Al_mgL))/mean(Al_mgL)), meanMn = mean(Mn_mgL), erMn = abs(100*(mean(Mn_mgL)-first(Mn_mgL))/mean(Mn_mgL)), ext = first(Extraction), hid = first(HorizonId), solution = first(Solution), soil = first(Soil))
+
+#grep the means, ext, and hid
+DATA3 <- select(DATA2, contains(c("hid","ext","er","mean","solution","soil")))
+
+#figure out how to actually do this to test the accuracy
+#DATA2 <- cbind(DATA2, flag = (DATA2$sdP/DATA2$meanP)*100)
+
+DATA4 <- DATA3 %>% pivot_wider(id_cols = hid, names_from = ext, values_from = meanP)
+
+DATA5 <- DATA3[grep("MM",DATA3$ext),]
+
+DATA6 <- cbind(DATA4, DATA5[,4:12])
+colnames(DATA6) <- c("hid", "mean_CaCl2_P","mean_M3_P","mean_MM_P", "mean_MM_Ca", "mean_MM_K", "mean_MM_Mg", "mean_MM_Na", "mean_MM_Fe", "mean_MM_Al", "mean_MM_Mn", "MM_solution", "MM_soil")
+
+```
+
+convert to mg kg and cmol kg
+```{r}
+
+#MM extractions
+MM_mgkg_fun<- function(mgl, solu, soil) {
+  DATA <- DATA6 %>% mutate(MM_mgkg = mgl * (solu/soil) * (1/1000) * 1000)
+  return(DATA$MM_mgkg)
+}
+
+#M3 extractions
+M3_mgkg_fun<- function(mgl) {
+  DATA <- DATA6 %>% mutate(M3_mgkg = mgl * (25/2.5) * (1/1000) * 1000)
+  return(DATA$M3_mgkg)
+}
+
+#CaCl2 extractions
+CaCl2_mgkg_fun<- function(mgl) {
+  DATA <- DATA6 %>% mutate(CaCl2_mgkg = mgl * (20/2) * (1/1000) * 1000)
+  return(DATA$CaCl2_mgkg)
+}
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_Ca, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_Ca_mgkg = mgkg
+DATA6$MM_Ca_cmolkg <- (DATA6$MM_Ca_mgkg/(40.08/2)/10)
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_Na, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_Na_mgkg = mgkg
+DATA6$MM_Na_cmolkg <- (DATA6$MM_Na_mgkg/(22.99/1)/10)
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_Mg, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_Mg_mgkg = mgkg
+DATA6$MM_Mg_cmolkg <- (DATA6$MM_Mg_mgkg/(24.3/2)/10)
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_K, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_K_mgKg = mgkg
+DATA6$MM_K_cmolkg <- (DATA6$MM_K_mgKg/(39.1/1)/10)
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_Al, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_Al_mgkg = mgkg
+DATA6$MM_Al_cmolkg <- (DATA6$MM_Al_mgkg/(26.98/3)/10)
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_P, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_P_mgkg = mgkg
+
+mgkg <- M3_mgkg_fun(DATA6$mean_M3_P)
+DATA6$M3_P_mgkg = mgkg
+
+mgkg <- CaCl2_mgkg_fun(DATA6$mean_CaCl2_P)
+DATA6$CaCl2_P_mgkg = mgkg
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_Fe, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_Fe_mgKg = mgkg
+
+mgkg <- MM_mgkg_fun(DATA6$mean_MM_Mn, DATA6$MM_solution, DATA6$MM_soil)
+DATA6$MM_Mn_mgKg = mgkg
+
+DATA6$CEC_cmolkg <- rowSums(DATA6[,c("MM_Ca_cmolkg", "MM_Na_cmolkg", "MM_Mg_cmolkg", "MM_K_cmolkg")], na.rm = TRUE)
+```
+
+```{r}
+#join to data for pedon names and horizons
+#summarize somewhere so that you can get average of the duplicates
+#also make sure to include Oa and Bs results
+out_dir <- "data/processed"
+
+write_csv(DATA6, paste(out_dir, "ExtractableCationsRegional.csv", sep = "/"))
+```
+
+
+
+

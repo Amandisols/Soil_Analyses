@@ -12,9 +12,10 @@ library('gridExtra')
 library('dplyr')
 library('car')
 library('dunn.test')
+library('vroom')
 
 #to do: incorporate bulk density, make applicable to soil and rock alike
-setwd("~/Documents/uvm/phd/research/data/lab/Exchangeable/VT/Soil_Analyses/tau/exports/")
+setwd("~/Documents/uvm/phd/research/data/lab/Soil_Analyses/tau/exports/")
 
 #fix all this so it looks better
 nocsvs <- print(list.files('values_tau/hb/'))
@@ -73,7 +74,7 @@ ggsave(filename = "all3_soil_box_withextra.png", g)
 
 grilled <- melt(soilsub, id=c("X","Pedon","TDepth","BDepth","Name","Depth","Cat","LV","Hor"))
 grilled
-cheese <- ddply(grilled, c("Pedon", "variable", "Cat"), summarise,
+cheese <- grilled %>% group_by(Pedon, variable, Cat) %>% summarise(
                   N = length(Pedon),
                   mean = mean(value),
                   sd = sd(value),
@@ -84,7 +85,7 @@ qqPlot(soilsub$tau_Si)
 
 #take out lateral E from Bhs
 cheese2 <- cheese[!(cheese$Pedon == "52_3_X3.1" & cheese$Cat == "LE"),]
-write.csv(cheese2,"values_tau/processed/means_datalist1.csv")
+write.csv(cheese2,"values_tau/processed/means_datalist2.csv")
 
 #anova
 test <- aov(formula = tau_Ca ~ Cat, data = soilsub)
@@ -110,14 +111,32 @@ sandy <- nobutter[which(nobutter$Cat != "LBhs" & nobutter$Cat != "VBhs"),]
 
 ktest <- kruskal.test(tau_Ca ~ Cat, data = nobutter)
 
+nobutter <- cbind(nobutter, logCatau = log10(nobutter$tau_Ca))
+nobutter <- cbind(nobutter, logFetau = log1p(nobutter$tau_Fe))
+nobutter <- cbind(nobutter, logAltau = log1p(nobutter$tau_Al))
+
+#these are the ones you want to use
 le2 <- filter(nobutter, Cat == "LE")
 ve2 <- filter(nobutter, Cat == "VE")
 vbhs2 <- filter(nobutter, Cat == "VBhs")
 lbhs2 <- filter(nobutter, Cat == "LBhs")
 
-wilcox.test(ve2$tau_Al, le2$tau_Al, alternative = "two.sided")
-wilcox.test(ve2$tau_Al, vbhs2$tau_Al, alternative = "two.sided")
-wilcox.test(le2$tau_Al, lbhs2$tau_Al, alternative = "two.sided")
+ktest <- kruskal.test(tau_Ca ~ Cat, data = nobutter)
+pairwise.wilcox.test(nobutter$tau_Ca, nobutter$Cat)
+
+dunn.test(x = nobutter$tau_Ca, g = nobutter$Cat, )
+dunn.test()
+
+anCa <- aov(formula = logCatau ~ Cat, data = nobutter)
+anCa
+
+tukCa <- TukeyHSD(an1)
+tukCa
+
+an
+
+wilcox.test(ve2$tau_Ca, le2$tau_Ca, alternative = "two.sided")
+wilcox.test(ve2$tau_Fe, le2$tau_Fe, alternative = "two.sided")
 
 prettylabs <- c("Lateral E", "Vertical E")
 #cccccc
@@ -138,13 +157,21 @@ shapiro.test(le$tau_Ca)
 
 ktest
 
+pairwise.wilcox.test(nobutter$tau_Ca, nobutter$Cat, p.adjust.method = 'bonferroni')
+pairwise.wilcox.test(nobutter$tau_Fe, nobutter$Cat, p.adjust.method = 'bonferroni')
+pairwise.wilcox.test(nobutter$tau_Al, nobutter$Cat, p.adjust.method = 'bonferroni')
+?pairwise.wilcox.test()
+
+
 #normality assumption is met for the whole dataset
 
-dunn.test(nobutter$tau_P, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(nobutter$tau_Al, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(nobutter$tau_Si, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
-dunn.test(nopickle$tau_Ca, nopickle$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+dunn.test(nobutter$tau_Ca, nobutter$Cat, kw=TRUE, altp = TRUE)
+dunn.test(nobutter$tau_Al, nobutter$Cat, kw=TRUE, altp = TRUE)
+dunn.test(nobutter$tau_Si, nobutter$Cat, kw=TRUE,  altp = TRUE)
+dunn.test(nobutter$tau_Fe, nobutter$Cat, kw=TRUE, altp = TRUE)
 dunn.test(nobutter$Ti, nobutter$Cat, kw=TRUE, method = "bonferroni", altp = TRUE)
+
+length(nobutter$tau_Ca)
 
 ?dunn.test()
 
